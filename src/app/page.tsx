@@ -26,13 +26,13 @@ const PHRASES = [
 ];
 
 /** Resuminho da alimentação de hoje, com atalho pra página Comida. */
-function FoodSummary({ profile, trainingToday }: { profile: Profile; trainingToday: boolean }) {
+function FoodSummary({ profile }: { profile: Profile }) {
   const today = dayKey();
   const meals = useLiveQuery(() => db.meals.where("date").equals(today).toArray(), [today]);
   const day = useLiveQuery(async () => (await db.foodDays.get(today)) ?? null, [today]);
   if (!meals || day === undefined) return null;
   const goal = profile.waterGoal ?? DEFAULT_WATER_GOAL;
-  const goals = dayGoals(meals, day?.water ?? 0, goal, trainingToday);
+  const goals = dayGoals(meals, day?.water ?? 0, goal);
   const done = goals.filter((g) => g.done).length;
   return (
     <Link href="/comida" className="mb-5 flex items-center gap-3 rounded-3xl border border-line bg-card p-3 shadow-soft active:scale-[0.99]">
@@ -257,7 +257,7 @@ export default function HomePage() {
         </section>
       )}
 
-      <FoodSummary profile={profile} trainingToday={!!todayPlan && !todayEntry?.optional} />
+      <FoodSummary profile={profile} />
 
       {/* Números */}
       <section className="mb-5 grid grid-cols-3 gap-3">

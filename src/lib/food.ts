@@ -1,9 +1,10 @@
 import type { FoodGroup, MealEntry, MealSlot } from "./types";
 
 /**
- * Alimentação pensada para uma adolescente que treina:
- * nada de contar calorias nem "comida proibida" — o foco é hábito
- * (comer bem distribuído, proteína, fruta, verdura, água e não treinar em jejum).
+ * Alimentação pensada para a rotina dela: dia corrido, no máximo
+ * 4 refeições (almoço, pós-almoço, janta e às vezes algo depois da janta)
+ * e comida simples, sem nada complicado. Nada de contar calorias nem
+ * "comida proibida" — o foco é hábito.
  */
 
 export const GROUPS: { id: FoodGroup; label: string; emoji: string }[] = [
@@ -17,29 +18,38 @@ export const GROUPS: { id: FoodGroup; label: string; emoji: string }[] = [
 
 export const GROUP_INFO = Object.fromEntries(GROUPS.map((g) => [g.id, g])) as Record<FoodGroup, (typeof GROUPS)[number]>;
 
-export const SLOTS: { id: MealSlot; label: string; emoji: string; training?: boolean }[] = [
+/**
+ * As 4 refeições do dia dela vêm primeiro; as outras ficam escondidas
+ * em "outro horário" (e aparecem só se ela usar).
+ */
+export const SLOTS: { id: MealSlot; label: string; emoji: string; main?: boolean }[] = [
+  { id: "almoco", label: "Almoço", emoji: "🍛", main: true },
+  { id: "lanche_tarde", label: "Pós-almoço", emoji: "🍌", main: true },
+  { id: "jantar", label: "Janta", emoji: "🍲", main: true },
+  { id: "ceia", label: "Depois da janta", emoji: "🌙", main: true },
   { id: "cafe", label: "Café da manhã", emoji: "☕" },
   { id: "lanche_manha", label: "Lanche da manhã", emoji: "🍎" },
-  { id: "almoco", label: "Almoço", emoji: "🍛" },
-  { id: "pre", label: "Antes do treino", emoji: "⚡", training: true },
-  { id: "lanche_tarde", label: "Lanche da tarde", emoji: "🥪" },
-  { id: "pos", label: "Depois do treino", emoji: "💪", training: true },
-  { id: "jantar", label: "Jantar", emoji: "🍲" },
-  { id: "ceia", label: "Ceia", emoji: "🌙" },
+  { id: "pre", label: "Antes do treino", emoji: "⚡" },
+  { id: "pos", label: "Depois do treino", emoji: "💪" },
 ];
 
 export const SLOT_INFO = Object.fromEntries(SLOTS.map((s) => [s.id, s])) as Record<MealSlot, (typeof SLOTS)[number]>;
 
 /** Refeição mais provável pelo horário (para já vir escolhida). */
-export function slotForTime(d = new Date(), trainingDay = false): MealSlot {
+export function slotForTime(d = new Date()): MealSlot {
   const h = d.getHours() + d.getMinutes() / 60;
-  if (h < 10) return "cafe";
-  if (h < 11.5) return "lanche_manha";
-  if (h < 14.5) return "almoco";
-  if (h < 18.5) return trainingDay ? "pre" : "lanche_tarde";
-  if (h < 22) return "jantar";
+  if (h < 10.5) return "cafe";
+  if (h < 15) return "almoco";
+  if (h < 18.5) return "lanche_tarde";
+  if (h < 21.5) return "jantar";
   return "ceia";
 }
+
+/** Nos dias de treino, o pós-almoço vira pré-treino e a janta vira pós-treino. */
+export const TRAINING_ROLE: Partial<Record<MealSlot, string>> = {
+  lanche_tarde: "pré-treino",
+  jantar: "pós-treino",
+};
 
 export interface Suggestion {
   text: string;
@@ -47,68 +57,94 @@ export interface Suggestion {
   groups: FoodGroup[];
 }
 
-export type SuggestionMoment = "cafe" | "lanche" | "refeicao" | "pre" | "pos" | "ceia";
+export type SuggestionMoment = "almoco" | "pos_almoco" | "janta" | "depois";
 
-export const MOMENTS: { id: SuggestionMoment; label: string; slot: MealSlot; hint: string }[] = [
-  { id: "cafe", label: "Café", slot: "cafe", hint: "Comece o dia com energia — de preferência com uma proteína." },
-  { id: "lanche", label: "Lanche", slot: "lanche_tarde", hint: "Lanche bom segura a fome até a próxima refeição." },
-  { id: "refeicao", label: "Almoço/jantar", slot: "almoco", hint: "Metade do prato de salada e legumes, ¼ de proteína e ¼ de carboidrato." },
-  { id: "pre", label: "Pré-treino", slot: "pre", hint: "1 a 2 horas antes. Algo leve com carboidrato — treinar em jejum pode dar tontura." },
-  { id: "pos", label: "Pós-treino", slot: "pos", hint: "Até umas 2 horas depois. Proteína + carboidrato ajudam o músculo a se recuperar." },
-  { id: "ceia", label: "Ceia", slot: "ceia", hint: "Se der fome antes de dormir, algo leve." },
+export const MOMENTS: { id: SuggestionMoment; label: string; slot: MealSlot; hint: string; trainingHint?: string }[] = [
+  {
+    id: "almoco",
+    label: "Almoço",
+    slot: "almoco",
+    hint: "Prato simples já resolve: arroz, feijão, uma proteína (ovo vale!) e algo verde.",
+  },
+  {
+    id: "pos_almoco",
+    label: "Pós-almoço",
+    slot: "lanche_tarde",
+    hint: "Lanche rápido, fácil de levar na bolsa.",
+    trainingHint: "Hoje tem treino: esse lanche é o seu pré-treino. Não vá treinar de estômago vazio!",
+  },
+  {
+    id: "janta",
+    label: "Janta",
+    slot: "jantar",
+    hint: "Pode ser bem simples — o importante é ter uma proteína.",
+    trainingHint: "Hoje tem treino: a janta é o seu pós-treino. Capricha na proteína (ovo, frango, carne).",
+  },
+  {
+    id: "depois",
+    label: "Depois da janta",
+    slot: "ceia",
+    hint: "Só se der fome — algo leve.",
+  },
 ];
 
 export const SUGGESTIONS: Record<SuggestionMoment, Suggestion[]> = {
-  cafe: [
-    { text: "Pão francês com ovo mexido e uma fruta", emoji: "🍳", groups: ["carbo", "proteina", "fruta"] },
-    { text: "Iogurte com granola e banana", emoji: "🥣", groups: ["leite", "carbo", "fruta"] },
-    { text: "Tapioca com queijo e mamão", emoji: "🫓", groups: ["carbo", "leite", "fruta"] },
-    { text: "Vitamina de banana com aveia", emoji: "🥤", groups: ["leite", "fruta", "carbo"] },
-    { text: "Cuscuz com ovo", emoji: "🌽", groups: ["carbo", "proteina"] },
-    { text: "Pão integral com pasta de amendoim e morango", emoji: "🥜", groups: ["carbo", "proteina", "fruta"] },
+  almoco: [
+    { text: "Arroz, feijão, uma carne e salada", emoji: "🍛", groups: ["carbo", "proteina", "verdura"] },
+    { text: "Arroz, feijão e 2 ovos cozidos com tomate", emoji: "🥚", groups: ["carbo", "proteina", "verdura"] },
+    { text: "Macarrão com frango desfiado", emoji: "🍝", groups: ["carbo", "proteina"] },
+    { text: "Marmita: arroz, frango e legumes", emoji: "🍱", groups: ["carbo", "proteina", "verdura"] },
+    { text: "Sanduíche de frango ou atum (dia sem tempo)", emoji: "🥪", groups: ["carbo", "proteina"] },
   ],
-  lanche: [
-    { text: "Fruta + punhado de castanhas", emoji: "🍌", groups: ["fruta"] },
-    { text: "Iogurte com mel", emoji: "🍯", groups: ["leite"] },
-    { text: "Sanduíche de queijo branco e tomate", emoji: "🥪", groups: ["carbo", "leite", "verdura"] },
-    { text: "Ovo cozido + fruta", emoji: "🥚", groups: ["proteina", "fruta"] },
-    { text: "Pipoca feita em casa", emoji: "🍿", groups: ["carbo"] },
+  pos_almoco: [
+    { text: "2 ovos cozidos e uma fruta", emoji: "🥚", groups: ["proteina", "fruta"] },
+    { text: "Banana com aveia", emoji: "🍌", groups: ["fruta", "carbo"] },
+    { text: "Iogurte com fruta", emoji: "🍓", groups: ["leite", "fruta"] },
+    { text: "Pão com queijo", emoji: "🧀", groups: ["carbo", "leite"] },
+    { text: "Fruta e um punhado de amendoim ou castanha", emoji: "🥜", groups: ["fruta"] },
     { text: "Biscoito de arroz com pasta de amendoim", emoji: "🍘", groups: ["carbo", "proteina"] },
   ],
-  refeicao: [
-    { text: "Arroz, feijão, frango grelhado e salada", emoji: "🍛", groups: ["carbo", "proteina", "verdura"] },
-    { text: "Macarrão com carne moída e legumes", emoji: "🍝", groups: ["carbo", "proteina", "verdura"] },
-    { text: "Omelete com legumes e arroz", emoji: "🍳", groups: ["proteina", "verdura", "carbo"] },
-    { text: "Peixe, batata e brócolis", emoji: "🐟", groups: ["proteina", "carbo", "verdura"] },
-    { text: "Wrap de frango com alface e tomate", emoji: "🌯", groups: ["proteina", "carbo", "verdura"] },
-    { text: "Strogonoff de frango, arroz e salada", emoji: "🍲", groups: ["proteina", "carbo", "verdura"] },
+  janta: [
+    { text: "Arroz, feijão, ovo cozido e salada", emoji: "🥚", groups: ["carbo", "proteina", "verdura"] },
+    { text: "Ovos mexidos com pão ou tapioca", emoji: "🍳", groups: ["proteina", "carbo"] },
+    { text: "O que sobrou do almoço (vale muito!)", emoji: "🍲", groups: ["carbo", "proteina"] },
+    { text: "Cuscuz com ovo", emoji: "🌽", groups: ["carbo", "proteina"] },
+    { text: "Sanduíche de frango com alface e tomate", emoji: "🥪", groups: ["proteina", "carbo", "verdura"] },
   ],
-  pre: [
-    { text: "Banana com aveia e mel", emoji: "🍌", groups: ["fruta", "carbo"] },
-    { text: "Pão com queijo e um suco", emoji: "🥪", groups: ["carbo", "leite"] },
-    { text: "Tapioca com banana", emoji: "🫓", groups: ["carbo", "fruta"] },
-    { text: "Iogurte com fruta", emoji: "🍓", groups: ["leite", "fruta"] },
-  ],
-  pos: [
-    { text: "Arroz, feijão, proteína e salada", emoji: "🍛", groups: ["carbo", "proteina", "verdura"] },
-    { text: "Vitamina de banana com leite e aveia", emoji: "🥤", groups: ["leite", "fruta", "carbo"] },
-    { text: "Sanduíche de frango", emoji: "🥪", groups: ["proteina", "carbo"] },
-    { text: "Ovos mexidos com pão", emoji: "🍳", groups: ["proteina", "carbo"] },
-  ],
-  ceia: [
-    { text: "Copo de leite morno ou iogurte", emoji: "🥛", groups: ["leite"] },
+  depois: [
+    { text: "Iogurte", emoji: "🥛", groups: ["leite"] },
     { text: "Uma fruta", emoji: "🍎", groups: ["fruta"] },
-    { text: "Torrada com queijo", emoji: "🧀", groups: ["carbo", "leite"] },
+    { text: "Copo de leite", emoji: "🥛", groups: ["leite"] },
+    { text: "Ovo cozido", emoji: "🥚", groups: ["proteina"] },
   ],
 };
 
+/** Atalhos de um toque para o que ela come sempre. */
+export interface QuickItem {
+  id: string;
+  emoji: string;
+  label: string;
+  one: string;
+  many: (n: number) => string;
+  groups: FoodGroup[];
+}
+
+export const QUICK_ITEMS: QuickItem[] = [
+  { id: "ovo", emoji: "🥚", label: "Ovo cozido", one: "Ovo cozido", many: (n) => `${n} ovos cozidos`, groups: ["proteina"] },
+  { id: "fruta", emoji: "🍌", label: "Fruta", one: "Uma fruta", many: (n) => `${n} frutas`, groups: ["fruta"] },
+  { id: "iogurte", emoji: "🥛", label: "Iogurte/leite", one: "Iogurte ou leite", many: (n) => `${n}× iogurte ou leite`, groups: ["leite"] },
+  { id: "salada", emoji: "🥗", label: "Salada", one: "Salada", many: (n) => `Salada (${n}×)`, groups: ["verdura"] },
+];
+
 export const FOOD_TIPS = [
-  "Monte o prato: metade salada e legumes, ¼ proteína (frango, carne, ovo, peixe, feijão) e ¼ carboidrato (arroz, batata, macarrão).",
-  "Proteína nas refeições principais ajuda o músculo a se recuperar do treino.",
-  "Nos dias de treino, coma algo 1–2 horas antes. Treinar em jejum pode dar tontura e fraqueza.",
+  "Ovo cozido é um ótimo aliado: proteína barata, prática e fácil de levar. Pode comer todo dia 🥚",
+  "Cozinhe vários ovos de uma vez: com casca, eles duram até 1 semana na geladeira.",
+  "Com poucas refeições no dia, capriche nelas: uma proteína no almoço e outra na janta.",
+  "Fruta é o lanche mais fácil de levar na bolsa.",
+  "Nos dias de treino, coma alguma coisa umas 1–2 horas antes. Treinar com fome pode dar tontura.",
   "Carboidrato não é vilão: é a energia do treino 💛",
-  "Leve a garrafinha de água pro treino e pra escola.",
-  "Docinho também faz parte da vida. Equilíbrio vale mais que perfeição.",
+  "Leve a garrafinha de água pra todo lado.",
+  "Docinho também faz parte. Equilíbrio vale mais que perfeição.",
   "Com 17 anos o corpo ainda está crescendo — comer bem é tão importante quanto treinar.",
   "Quer um plano certinho pra você? Uma nutricionista pode montar.",
 ];
@@ -122,22 +158,20 @@ export interface DayGoal {
   detail: string;
 }
 
-export function dayGoals(meals: MealEntry[], water: number, waterGoal: number, trainingDay: boolean): DayGoal[] {
-  const count = (g: FoodGroup) => meals.filter((m) => m.groups.includes(g)).length;
-  const has = (s: MealSlot) => meals.some((m) => m.slot === s);
-  const goals: DayGoal[] = [
+/** Metas possíveis num dia corrido. Conta refeições (horários), não quantidade de comida. */
+export function dayGoals(meals: MealEntry[], water: number, waterGoal: number): DayGoal[] {
+  const slotsWith = (g?: FoodGroup) => new Set(meals.filter((m) => !g || m.groups.includes(g)).map((m) => m.slot)).size;
+  const meals3 = slotsWith();
+  const protein = slotsWith("proteina");
+  const fruit = slotsWith("fruta");
+  const veg = slotsWith("verdura");
+  return [
     { id: "agua", label: "Água", done: water >= waterGoal, detail: `${water}/${waterGoal} copos` },
-    { id: "cafe", label: "Café da manhã", done: has("cafe"), detail: has("cafe") ? "feito" : "ainda não" },
-    { id: "proteina", label: "Proteína", done: count("proteina") >= 3, detail: `${count("proteina")}/3` },
-    { id: "fruta", label: "Frutas", done: count("fruta") >= 2, detail: `${count("fruta")}/2` },
-    { id: "verdura", label: "Verduras e legumes", done: count("verdura") >= 2, detail: `${count("verdura")}/2` },
-    { id: "leite", label: "Leite/iogurte/queijo", done: count("leite") >= 1, detail: `${count("leite")}/1` },
+    { id: "refeicoes", label: "Comeu 3 vezes", done: meals3 >= 3, detail: `${meals3}/3` },
+    { id: "proteina", label: "Proteína", done: protein >= 2, detail: `${protein}/2` },
+    { id: "fruta", label: "Fruta", done: fruit >= 1, detail: fruit ? "feito" : "ainda não" },
+    { id: "verdura", label: "Verdura ou legume", done: veg >= 1, detail: veg ? "feito" : "ainda não" },
   ];
-  if (trainingDay) {
-    goals.push({ id: "pre", label: "Pré-treino", done: has("pre"), detail: has("pre") ? "feito" : "ainda não" });
-    goals.push({ id: "pos", label: "Pós-treino", done: has("pos"), detail: has("pos") ? "feito" : "ainda não" });
-  }
-  return goals;
 }
 
 export const DEFAULT_WATER_GOAL = 8;

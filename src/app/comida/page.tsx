@@ -2,7 +2,7 @@
 
 import { Camera, ChevronDown, ChevronLeft, ChevronRight, Lightbulb, Minus, Plus, Trash2, X } from "lucide-react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Sunflower, SunflowerGoals, WaterCup } from "@/components/art";
 import { Button, Card, Chip, ConfirmSheet, cx, Field, IconButton, inputClass, PageHeader, SectionTitle, Select, Sheet, Spinner, washStyle } from "@/components/ui";
 import { db, uid } from "@/lib/db";
@@ -14,10 +14,13 @@ import {
   GROUP_INFO,
   GROUPS,
   MOMENTS,
+  QUICK_ITEMS,
   SLOT_INFO,
   SLOTS,
   slotForTime,
   SUGGESTIONS,
+  TRAINING_ROLE,
+  type QuickItem,
   type Suggestion,
   type SuggestionMoment,
 } from "@/lib/food";
@@ -36,16 +39,14 @@ function nowTime() {
 }
 
 function momentToSlot(m: SuggestionMoment): MealSlot {
-  const h = new Date().getHours();
-  if (m === "lanche") return h < 12 ? "lanche_manha" : "lanche_tarde";
-  if (m === "refeicao") return h < 16 ? "almoco" : "jantar";
   return MOMENTS.find((x) => x.id === m)!.slot;
 }
 
 function slotToMoment(s: MealSlot): SuggestionMoment {
-  if (s === "lanche_manha" || s === "lanche_tarde") return "lanche";
-  if (s === "almoco" || s === "jantar") return "refeicao";
-  return s as SuggestionMoment;
+  if (s === "lanche_tarde" || s === "lanche_manha" || s === "pre") return "pos_almoco";
+  if (s === "jantar" || s === "pos") return "janta";
+  if (s === "ceia") return "depois";
+  return "almoco";
 }
 
 // ——— Painel de refeição ———
@@ -58,7 +59,7 @@ function MealPhoto({ mediaId, className }: { mediaId: string; className?: string
   return url ? <img src={url} alt="Foto da refeição" className={cx("object-cover", className)} /> : <div className={cx("bg-card-2", className)} />;
 }
 
-function MealSheet({ draft, date, trainingDay, onClose }: { draft: Draft; date: string; trainingDay: boolean; onClose: () => void }) {
+function MealSheet({ draft, date, onClose }: { draft: Draft; date: string; onClose: () => void }) {
   const [slot, setSlot] = useState<MealSlot>(draft.slot);
   const [text, setText] = useState(draft.text ?? "");
   const [groups, setGroups] = useState<FoodGroup[]>(draft.groups ?? []);
@@ -77,6 +78,8 @@ function MealSheet({ draft, date, trainingDay, onClose }: { draft: Draft; date: 
     }
     setBusy(true);
     try {
+      // Se ela reescreveu um atalho ("2 ovos cozidos"), vira uma refeição comum.
+      const keepQuick = draft.quick && text.trim() === (draft.text ?? "") && slot === draft.slot;
       const entry: MealEntry = {
         id: draft.id ?? uid("refeicao"),
         date,
@@ -85,6 +88,8 @@ function MealSheet({ draft, date, trainingDay, onClose }: { draft: Draft; date: 
         groups,
         time: time || undefined,
         mediaId,
+        quick: keepQuick ? draft.quick : undefined,
+        qty: keepQuick ? draft.qty : undefined,
         createdAt: draft.createdAt ?? Date.now(),
       };
       await db.meals.put(entry);
@@ -116,7 +121,7 @@ function MealSheet({ draft, date, trainingDay, onClose }: { draft: Draft; date: 
     }
   }
 
-  const slots = SLOTS.filter((s) => !s.training || trainingDay || s.id === slot);
+  const slots = SLOTS;
 
   return (
     <>
@@ -238,6 +243,18 @@ function MealSheet({ draft, date, trainingDay, onClose }: { draft: Draft; date: 
   );
 }
 
+function Toast({ text, onDone }: { text: string; onDone: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 2200);
+    return () => clearTimeout(t);
+  }, [onDone]);
+  return (
+    <div className="animate-pop pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+92px)] z-40 flex justify-center px-4">
+      <span className="rounded-full bg-ink px-4 py-2 text-sm font-bold text-paper shadow-soft">{text} 🌻</span>
+    </div>
+  );
+}
+
 // ——— Página ———
 
 function WeekStrip({ date, onPick, meals, days, profile, sessions }: { date: string; onPick: (d: string) => void; meals: MealEntry[]; days: Map<string, number>; profile: Profile; sessions: Session[] }) {
@@ -256,7 +273,7 @@ function WeekStrip({ date, onPick, meals, days, profile, sessions }: { date: str
             const k = dayKey(d);
             const future = k > today;
             const dayMeals = meals.filter((m) => m.date === k);
-            const goals = dayGoals(dayMeals, days.get(k) ?? 0, goal, isTrainingDay(k, profile, sessions));
+            const goals = dayGoals(dayMeals, days.get(k) ?? 0, goal);
             const done = goals.filter((g) => g.done).length;
             const logged = dayMeals.length > 0 || (days.get(k) ?? 0) > 0;
             return (
@@ -289,9 +306,9 @@ function WeekStrip({ date, onPick, meals, days, profile, sessions }: { date: str
 }
 
 function SuggestionsCard({ trainingDay, onPick }: { trainingDay: boolean; onPick: (s: Suggestion, m: SuggestionMoment) => void }) {
-  const [moment, setMoment] = useState<SuggestionMoment>(() => slotToMoment(slotForTime(new Date(), trainingDay)));
+  const [moment, setMoment] = useState<SuggestionMoment>(() => slotToMoment(slotForTime()));
   const info = MOMENTS.find((m) => m.id === moment)!;
-  const moments = MOMENTS.filter((m) => trainingDay || (m.id !== "pre" && m.id !== "pos"));
+  const moments = MOMENTS;
   return (
     <Card className="overflow-hidden">
       <div className="no-scrollbar flex gap-1.5 overflow-x-auto p-3 pb-2">
@@ -306,7 +323,9 @@ function SuggestionsCard({ trainingDay, onPick }: { trainingDay: boolean; onPick
           </button>
         ))}
       </div>
-      <p className="px-4 pb-2 text-sm text-ink-2">{info.hint}</p>
+      <p className={cx("px-4 pb-2 text-sm", trainingDay && info.trainingHint ? "font-bold text-leaf" : "text-ink-2")}>
+        {trainingDay && info.trainingHint ? info.trainingHint : info.hint}
+      </p>
       <ul className="divide-y divide-line">
         {SUGGESTIONS[moment].map((s) => (
           <li key={s.text}>
@@ -356,6 +375,7 @@ export default function ComidaPage() {
   const sessions = useDoneSessions();
   const [date, setDate] = useState(() => dayKey());
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
   const weekStart = dayKey(startOfWeek(parseDayKey(date)));
   const weekEnd = dayKey(addDays(startOfWeek(parseDayKey(date)), 6));
   const weekMeals = useLiveQuery(() => db.meals.where("date").between(weekStart, weekEnd, true, true).toArray(), [weekStart, weekEnd]);
@@ -368,7 +388,7 @@ export default function ComidaPage() {
   const water = waterByDay.get(date) ?? 0;
   const meals = weekMeals.filter((m) => m.date === date).sort((a, b) => (a.time ?? "99").localeCompare(b.time ?? "99") || a.createdAt - b.createdAt);
   const trainingDay = isTrainingDay(date, profile, sessions);
-  const goals = dayGoals(meals, water, waterGoal, trainingDay);
+  const goals = dayGoals(meals, water, waterGoal);
   const done = goals.filter((g) => g.done).length;
   const isToday = date === dayKey();
   const d = parseDayKey(date);
@@ -381,7 +401,21 @@ export default function ComidaPage() {
     });
   }
 
-  const visibleSlots = SLOTS.filter((s) => !s.training || trainingDay || meals.some((m) => m.slot === s.id));
+  const visibleSlots = SLOTS.filter((s) => s.main || meals.some((m) => m.slot === s.id));
+
+  async function quickAdd(q: QuickItem) {
+    const slot = slotForTime();
+    await db.transaction("rw", db.meals, async () => {
+      const same = (await db.meals.where("date").equals(date).toArray()).find((m) => m.slot === slot && m.quick === q.id);
+      if (same) {
+        const qty = (same.qty ?? 1) + 1;
+        await db.meals.update(same.id, { qty, text: q.many(qty) });
+      } else {
+        await db.meals.add({ id: uid("refeicao"), date, slot, text: q.one, groups: q.groups, time: nowTime(), quick: q.id, qty: 1, createdAt: Date.now() });
+      }
+    });
+    setToast(`${q.emoji} anotado em ${SLOT_INFO[slot].label}`);
+  }
 
   return (
     <div>
@@ -453,6 +487,26 @@ export default function ComidaPage() {
         </div>
       </Card>
 
+      {/* Atalhos */}
+      {isToday && (
+        <Card className="mb-5 p-3">
+          <p className="mb-2 px-1 text-sm font-bold text-ink-2">Anotar rápido (vai pra refeição do horário)</p>
+          <div className="grid grid-cols-4 gap-2">
+            {QUICK_ITEMS.map((q) => (
+              <button
+                key={q.id}
+                type="button"
+                onClick={() => quickAdd(q)}
+                className="flex flex-col items-center gap-1 rounded-2xl border border-line bg-paper py-2.5 text-xs font-bold active:scale-95 active:bg-sun-pale"
+              >
+                <span className="text-2xl">{q.emoji}</span>
+                {q.label}
+              </button>
+            ))}
+          </div>
+        </Card>
+      )}
+
       {/* Refeições */}
       <SectionTitle>Refeições</SectionTitle>
       <Card className="mb-5 divide-y divide-line">
@@ -462,7 +516,14 @@ export default function ComidaPage() {
             <div key={s.id} className="p-3">
               <div className="flex items-center gap-2">
                 <span className="text-xl">{s.emoji}</span>
-                <span className={cx("flex-1 font-extrabold", !list.length && "font-bold text-ink-2")}>{s.label}</span>
+                <span className={cx("flex-1 font-extrabold", !list.length && "font-bold text-ink-2")}>
+                  {s.label}
+                  {trainingDay && TRAINING_ROLE[s.id] && (
+                    <Chip tone="leaf" className="ml-2 align-middle">
+                      {TRAINING_ROLE[s.id]}
+                    </Chip>
+                  )}
+                </span>
                 <IconButton label={`Adicionar em ${s.label}`} className="bg-sun-pale text-sun-deep" onClick={() => setDraft({ slot: s.id })}>
                   <Plus size={18} />
                 </IconButton>
@@ -494,6 +555,14 @@ export default function ComidaPage() {
         })}
       </Card>
 
+      <button
+        type="button"
+        onClick={() => setDraft({ slot: slotForTime() })}
+        className="-mt-3 mb-5 block w-full text-center text-sm font-bold text-ink-2 underline decoration-sun decoration-2 underline-offset-4"
+      >
+        Comeu em outro horário?
+      </button>
+
       <SectionTitle>Ideias do que comer</SectionTitle>
       <div className="mb-5">
         <SuggestionsCard
@@ -504,7 +573,8 @@ export default function ComidaPage() {
 
       <TipsCard />
 
-      {draft && <MealSheet key={draft.id ?? `${draft.slot}-${draft.text ?? ""}`} draft={draft} date={date} trainingDay={trainingDay} onClose={() => setDraft(null)} />}
+      {draft && <MealSheet key={draft.id ?? `${draft.slot}-${draft.text ?? ""}`} draft={draft} date={date} onClose={() => setDraft(null)} />}
+      {toast && <Toast key={toast} text={toast} onDone={() => setToast(null)} />}
     </div>
   );
 }

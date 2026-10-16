@@ -172,6 +172,9 @@ export interface MealEntry {
   /** HH:MM */
   time?: string;
   mediaId?: string;
+  /** veio de um atalho ("ovo") — tocar de novo soma na mesma refeição */
+  quick?: string;
+  qty?: number;
   createdAt: number;
 }
 

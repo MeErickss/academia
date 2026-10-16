@@ -39,17 +39,15 @@ Por que assim:
 
 ## Alimentação
 
-A área de comida foi pensada para hábito, não para dieta: **não conta calorias** e não tem "comida proibida" (com 17 anos o corpo ainda está crescendo, e contar caloria nessa idade costuma fazer mais mal do que bem). Ela anota o que comeu e marca os grupos (proteína, carboidrato, fruta, verdura/legume, leite/iogurte/queijo, docinho). O app transforma isso em pétalas de um girassol:
+Feita para a rotina dela: dia corrido, **no máximo 4 refeições** (almoço, pós-almoço, janta e às vezes algo depois da janta) e comida simples. Foco em hábito, não em dieta: **não conta calorias** e não tem "comida proibida" (com 17 anos o corpo ainda está crescendo).
 
-- água no objetivo (padrão 8 copos de 250 ml, dá pra mudar)
-- tomou café da manhã
-- proteína em 3 refeições
-- 2 frutas
-- verduras/legumes em 2 refeições
-- 1 porção de leite/iogurte/queijo
-- nos dias de treino: comeu antes e depois do treino
+- **Anotar rápido**: atalhos de um toque (🥚 ovo cozido, 🍌 fruta, 🥛 iogurte/leite, 🥗 salada) que vão para a refeição do horário. Tocar de novo soma ("2 ovos cozidos").
+- **Refeições**: texto livre, grupos (proteína, carboidrato, fruta, verdura/legume, leite/iogurte/queijo, docinho), horário e foto opcional. Outros horários (café, pré/pós-treino) ficam em "Comeu em outro horário?".
+- **Dias de treino**: o pós-almoço aparece como *pré-treino* e a janta como *pós-treino*, com dicas para não treinar de estômago vazio.
+- **Girassol do dia** (metas possíveis num dia corrido): água, comer pelo menos 3 vezes, proteína em 2 refeições, 1 fruta e 1 verdura/legume.
+- **Ideias do que comer** para cada uma das 4 refeições, simples e com bastante ovo. "Comi!" registra na hora.
 
-As ideias do que comer são comidas brasileiras simples, separadas por momento (café, lanche, almoço/jantar, pré-treino, pós-treino, ceia). Tocar em uma já registra a refeição. Para um plano alimentar individual, o ideal é uma nutricionista.
+Para um plano alimentar individual, o ideal é uma nutricionista.
 
 ## Rodar no computador
 
