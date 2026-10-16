@@ -7,7 +7,7 @@ import { Sunflower } from "@/components/art";
 import { BodyFigure } from "@/components/BodyMap";
 import { LineChart } from "@/components/LineChart";
 import { SessionSheet } from "@/components/SessionSheet";
-import { Card, cx, EmptyState, inputClass, PageHeader, SectionTitle, Sheet, Spinner } from "@/components/ui";
+import { Card, cx, EmptyState, PageHeader, SectionTitle, Select, Sheet, Spinner } from "@/components/ui";
 import { addDays, dayKey, formatDate, formatDuration, MONTHS, relativeDay, WEEKDAYS_LETTER } from "@/lib/dates";
 import { useDoneSessions, useExerciseMap } from "@/lib/hooks";
 import { ALL_MUSCLES, MUSCLE_SLUGS } from "@/lib/muscles";
@@ -202,13 +202,17 @@ function ExerciseProgress({ sessions }: { sessions: Session[] }) {
 
   return (
     <div>
-      <select className={inputClass} value={id} onChange={(e) => setPicked(e.target.value)}>
-        {options.map(([eid, o]) => (
-          <option key={eid} value={eid}>
-            {exercises?.get(eid)?.name ?? o.name} ({o.n}×)
-          </option>
-        ))}
-      </select>
+      <Select
+        ariaLabel="Exercício do gráfico"
+        title="Escolher exercício"
+        value={id}
+        onChange={setPicked}
+        options={options.map(([eid, o]) => ({
+          value: eid,
+          label: exercises?.get(eid)?.name ?? o.name,
+          hint: `${o.n} ${o.n === 1 ? "treino" : "treinos"}`,
+        }))}
+      />
       <div className="mt-3">
         <LineChart points={pts} unit={unit} />
       </div>

@@ -18,6 +18,7 @@ import {
   NumberInput,
   PageHeader,
   PLAN_COLORS,
+  Select,
   Spinner,
   Toggle,
 } from "@/components/ui";
@@ -90,13 +91,16 @@ function ItemEditor({
         <Field label={measure === "minutes" ? "Vezes" : "Séries"}>{() => <Stepper value={item.sets} onChange={(sets) => onChange({ sets })} />}</Field>
         <Field label="Descanso">
           {(id) => (
-            <select id={id} className={inputClass} value={item.restSec} onChange={(e) => onChange({ restSec: Number(e.target.value) })}>
-              {REST_OPTIONS.map((s) => (
-                <option key={s} value={s}>
-                  {s === 0 ? "sem descanso" : s < 60 ? `${s} seg` : `${Math.floor(s / 60)} min${s % 60 ? ` ${s % 60}s` : ""}`}
-                </option>
-              ))}
-            </select>
+            <Select
+              id={id}
+              title="Descanso entre séries"
+              value={item.restSec}
+              onChange={(restSec) => onChange({ restSec })}
+              options={REST_OPTIONS.map((s) => ({
+                value: s,
+                label: s === 0 ? "sem descanso" : s < 60 ? `${s} seg` : `${Math.floor(s / 60)} min${s % 60 ? ` ${s % 60}s` : ""}`,
+              }))}
+            />
           )}
         </Field>
         <Field label={`${unit}: de`}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { Check, ChevronDown, X } from "lucide-react";
 import {
   useEffect,
   useId,
@@ -405,5 +405,91 @@ export function Spinner() {
     <div className="flex justify-center py-16">
       <div className="h-8 w-8 animate-spin rounded-full border-4 border-sun-soft border-t-sun" />
     </div>
+  );
+}
+
+export interface SelectOption<T extends string | number> {
+  value: T;
+  /** Texto curto, mostrado no campo fechado */
+  label: string;
+  /** Linha extra, mostrada só na lista */
+  hint?: ReactNode;
+}
+
+/**
+ * Seletor no estilo do app. O <select> nativo abre a lista do sistema
+ * (azul no Windows, roleta no iPhone) e quase não aceita estilo.
+ */
+export function Select<T extends string | number>({
+  value,
+  options,
+  onChange,
+  id,
+  ariaLabel,
+  title,
+  className,
+}: {
+  value: T;
+  options: SelectOption<T>[];
+  onChange: (v: T) => void;
+  id?: string;
+  ariaLabel?: string;
+  title?: ReactNode;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const current = options.find((o) => o.value === value);
+  return (
+    <>
+      <button
+        id={id}
+        type="button"
+        aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen(true)}
+        className={cx(inputClass, "flex min-w-0 items-center justify-between gap-2 text-left", open && "border-sun ring-2 ring-sun/30", className)}
+      >
+        <span className="min-w-0 truncate">{current?.label ?? "Escolher"}</span>
+        <ChevronDown size={18} className={cx("shrink-0 text-ink-3 transition", open && "rotate-180 text-sun-deep")} />
+      </button>
+      <Sheet open={open} onClose={() => setOpen(false)} title={title ?? ariaLabel}>
+        <ul role="listbox" className="space-y-1.5 pb-1">
+          {options.map((o) => {
+            const selected = o.value === value;
+            return (
+              <li key={String(o.value)}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  onClick={() => {
+                    setOpen(false);
+                    if (!selected) onChange(o.value);
+                  }}
+                  className={cx(
+                    "flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition active:scale-[0.99]",
+                    selected ? "border-sun bg-sun-pale" : "border-line bg-paper active:bg-card-2",
+                  )}
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className={cx("block", selected ? "font-extrabold" : "font-bold")}>{o.label}</span>
+                    {o.hint && <span className="block text-sm text-ink-2">{o.hint}</span>}
+                  </span>
+                  <span
+                    className={cx(
+                      "flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
+                      selected ? "bg-sun text-on-sun" : "border border-line",
+                    )}
+                  >
+                    {selected && <Check size={16} strokeWidth={3} />}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </Sheet>
+    </>
   );
 }

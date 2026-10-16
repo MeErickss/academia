@@ -4,7 +4,7 @@ import { ClipboardCopy, Download, FileUp, Heart, Share2, Trash2, Upload } from "
 import { useRef, useState, useSyncExternalStore } from "react";
 import { CAT_PALETTES, Cat } from "@/components/art";
 import { InstallSteps } from "@/components/Onboarding";
-import { Button, Card, ConfirmSheet, cx, Field, inputClass, NumberInput, PageHeader, SectionTitle, Segmented, Sheet, Spinner, Toggle } from "@/components/ui";
+import { Button, Card, ConfirmSheet, cx, Field, inputClass, NumberInput, PageHeader, SectionTitle, Segmented, Select, Sheet, Spinner, Toggle } from "@/components/ui";
 import {
   backupFileName,
   buildBackup,
@@ -119,15 +119,17 @@ function ScheduleCard({ profile, plans }: { profile: Profile; plans: Plan[] }) {
           <div key={d} className="p-3">
             <div className="flex items-center gap-3">
               <span className="w-20 shrink-0 font-bold">{WEEKDAYS[d]}</span>
-              <select aria-label={`Ficha de ${WEEKDAYS[d]}`} className={cx(inputClass, "h-11")} value={entry?.planId ?? ""} onChange={(e) => setDay(d, e.target.value)}>
-                <option value="">Descanso 😴</option>
-                {plans.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                    {p.subtitle ? ` — ${p.subtitle}` : ""}
-                  </option>
-                ))}
-              </select>
+              <Select
+                ariaLabel={`Ficha de ${WEEKDAYS[d]}`}
+                title={WEEKDAYS[d]}
+                className="h-11"
+                value={entry?.planId ?? ""}
+                onChange={(v) => setDay(d, v)}
+                options={[
+                  { value: "", label: "Descanso 😴", hint: "dia de recuperar" },
+                  ...plans.map((p) => ({ value: p.id, label: p.subtitle ? `${p.name} — ${p.subtitle}` : p.name, hint: `${p.items.length} exercícios` })),
+                ]}
+              />
             </div>
             {entry && (
               <div className="mt-1 pl-[5.75rem]">
