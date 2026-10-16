@@ -279,7 +279,7 @@ export default function CorpoPage() {
   if (!logs) return <Spinner />;
   return (
     <div>
-      <PageHeader title="Corpo" subtitle="Acompanhe do seu jeito" />
+      <PageHeader title="Corpo" subtitle="Acompanhe do seu jeito" cat="peek" />
       <p className="mb-4 rounded-2xl bg-leaf-soft p-3 text-sm text-ink-2">
         💛 Seu corpo está ficando mais forte a cada treino. Use isso pra acompanhar, nunca pra se cobrar — força, energia e
         disposição contam muito mais que a balança.

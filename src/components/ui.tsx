@@ -108,7 +108,20 @@ export function SectionTitle({ children, action, className }: { children: ReactN
   );
 }
 
-export function PageHeader({ title, subtitle, action, back }: { title: string; subtitle?: ReactNode; action?: ReactNode; back?: ReactNode }) {
+export function PageHeader({
+  title,
+  subtitle,
+  action,
+  back,
+  cat,
+}: {
+  title: string;
+  subtitle?: ReactNode;
+  action?: ReactNode;
+  back?: ReactNode;
+  /** gatinho no canto do cabeçalho */
+  cat?: CatPose;
+}) {
   return (
     <header className="mb-5 flex items-start justify-between gap-3 pt-2">
       <div className="flex min-w-0 items-start gap-1">
@@ -118,7 +131,12 @@ export function PageHeader({ title, subtitle, action, back }: { title: string; s
           {subtitle && <p className="mt-1 text-sm text-ink-2">{subtitle}</p>}
         </div>
       </div>
-      {action}
+      {(cat || action) && (
+        <div className="flex shrink-0 items-center gap-1">
+          {cat && <Cat pose={cat} size={cat === "sleep" ? 78 : 64} className={cx("-my-2", cat === "peek" && "mt-2")} />}
+          {action}
+        </div>
+      )}
     </header>
   );
 }

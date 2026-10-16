@@ -246,7 +246,7 @@ export default function EvolucaoPage() {
 
   return (
     <div>
-      <PageHeader title="Evolução" subtitle="Seu jardim de treinos 🌻" />
+      <PageHeader title="Evolução" subtitle="Seu jardim de treinos 🌻" cat="sit" />
 
       <div className="mb-5 grid grid-cols-2 gap-3">
         <Card className="p-4">

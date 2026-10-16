@@ -4,7 +4,7 @@ import { Check, ChevronDown, Flag, Info, Minus, MoreHorizontal, Plus, Repeat, Tr
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CatFace, Paw, Sunflower } from "@/components/art";
+import { Cat, CatFace, Paw, Sunflower } from "@/components/art";
 import { ExercisePicker } from "@/components/ExercisePicker";
 import { ExerciseThumb, MediaGallery } from "@/components/media";
 import { MuscleChips } from "@/components/plans";
@@ -420,7 +420,8 @@ function Workout({ session }: { session: Session }) {
       </Button>
 
       {done === total && total > 0 && (
-        <div className="mt-6 text-center">
+        <div className="mt-6 flex flex-col items-center text-center">
+          <Cat pose="happy" size={110} className="animate-pop" />
           <p className="font-hand text-3xl font-bold">Tudo feito, {profile?.name || "campeã"}!</p>
           <p className="text-sm text-ink-2">Toque em Finalizar treino pra salvar 🌻</p>
         </div>

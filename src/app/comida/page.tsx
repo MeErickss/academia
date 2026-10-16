@@ -419,7 +419,7 @@ export default function ComidaPage() {
 
   return (
     <div>
-      <PageHeader title="Comida" subtitle="Energia pro treino e pra crescer 💛" />
+      <PageHeader title="Comida" subtitle="Energia pro treino e pra crescer 💛" cat="happy" />
 
       <WeekStrip date={date} onPick={setDate} meals={weekMeals} days={waterByDay} profile={profile} sessions={sessions} />
 

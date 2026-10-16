@@ -102,6 +102,7 @@ export default function FichasPage() {
       <PageHeader
         title="Fichas"
         subtitle="Seus treinos montados"
+        cat="sit"
         action={
           <Button variant="sun" onClick={() => router.push("/fichas/editar?id=nova")}>
             <Plus size={18} /> Nova

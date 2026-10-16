@@ -204,12 +204,12 @@ function Face({ cx, cy, eyes }: { cx: number; cy: number; eyes: "open" | "happy"
       <ellipse cx={cx - 15} cy={cy + 7} rx="4" ry="2.4" fill={PINK} opacity="0.55" />
       <ellipse cx={cx + 15} cy={cy + 7} rx="4" ry="2.4" fill={PINK} opacity="0.55" />
       {eyes === "open" && (
-        <>
+        <g className="cat-blink">
           <ellipse cx={cx - 10} cy={cy} rx="3.2" ry="4" fill="var(--cy)" />
           <ellipse cx={cx + 10} cy={cy} rx="3.2" ry="4" fill="var(--cy)" />
           <circle cx={cx - 9} cy={cy - 1.4} r="1.1" fill="#fff" />
           <circle cx={cx + 11} cy={cy - 1.4} r="1.1" fill="#fff" />
-        </>
+        </g>
       )}
       {eyes === "happy" && (
         <path d={`M${t(-14, 1)} Q${t(-10, -3.5)} ${t(-6, 1)} M${t(6, 1)} Q${t(10, -3.5)} ${t(14, 1)}`} stroke="var(--cl)" strokeWidth="2.4" fill="none" strokeLinecap="round" />

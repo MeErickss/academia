@@ -3,7 +3,8 @@
 import { CloudDownload, Play, Settings, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { Cat, Sunflower, SunflowerGoals } from "@/components/art";
+import { Sunflower, SunflowerGoals, type CatPose } from "@/components/art";
+import { Mascot } from "@/components/Mascot";
 import { InstallSteps } from "@/components/Onboarding";
 import { estimateMinutes, MuscleChips, planMuscles, PlanPreviewSheet, useStartWorkout } from "@/components/plans";
 import { Card, Chip, cx, PLAN_COLORS, SectionTitle, Spinner, washStyle } from "@/components/ui";
@@ -87,6 +88,16 @@ export default function HomePage() {
   const plannedThisWeek = Object.values(profile.schedule).filter((e) => e && !e.optional).length;
   const streak = weekStreak(sessions, now);
   const phrase = PHRASES[(now.getDate() + now.getMonth()) % PHRASES.length];
+  const mascotPose: CatPose = active ? "sit" : doneToday.length ? "happy" : todayPlan ? "sit" : "sleep";
+  const mascotMessage = active
+    ? "Bora terminar o treino? Tô te esperando! 🐾"
+    : doneToday.length
+      ? `Você treinou hoje! Tô muito orgulhoso 💛`
+      : todayPlan
+        ? todayEntry?.optional
+          ? `Hoje o treino é leve e opcional. Se der vontade, eu vou junto 🌿`
+          : `Hoje é dia de ${todayPlan.name}${todayPlan.subtitle ? ` (${todayPlan.subtitle.toLowerCase()})` : ""}! Bora? 💪`
+        : `Hoje é descanso… bora tirar uma soneca? 😴 ${phrase}`;
   const otherPlans = plans.filter((p) => p.id !== todayPlan?.id);
   const needsBackup =
     sessions.length >= 3 && (!profile.lastBackupAt || now.getTime() - profile.lastBackupAt > 14 * 86400000);
@@ -104,15 +115,17 @@ export default function HomePage() {
             {profile.name ? "," : "!"}
             {profile.name && <span className="block text-sun-deep">{profile.name}!</span>}
           </h1>
-          <p className="mt-2 max-w-[15rem] text-sm text-ink-2">{phrase}</p>
         </div>
         <div className="flex shrink-0 flex-col items-end">
           <Link href="/ajustes" aria-label="Ajustes" className="-mr-1 flex h-10 w-10 items-center justify-center rounded-full text-ink-2 active:bg-card-2">
             <Settings size={22} />
           </Link>
-          <Sunflower stem size={70} className="animate-sway -mr-1 -mt-1" />
+          <Sunflower stem size={56} className="animate-sway -mr-1 -mt-1" />
         </div>
       </header>
+
+      {/* Gatinho */}
+      <Mascot catName={profile.catName} message={mascotMessage} pose={mascotPose} className="mb-4" />
 
       {/* Dica: instalar na Tela de Início */}
       {ios && !standalone && !profile.installTipDismissed && (
@@ -178,11 +191,11 @@ export default function HomePage() {
         </Card>
       ) : doneToday.length > 0 ? (
         <Card className="mb-4 flex items-center gap-4 overflow-hidden p-5" style={washStyle("folha")}>
-          <Cat pose="happy" size={92} className="shrink-0" />
+          <Sunflower size={84} className="animate-pop shrink-0" />
           <div>
             <p className="font-hand text-3xl font-bold leading-none">Treino feito!</p>
             <p className="mt-1 text-sm text-ink-2">
-              Hoje você fez <b>{doneToday[0].planName}</b>. Agora é descansar, comer bem e dormir. {profile.catName} tá orgulhoso 💛
+              Hoje você fez <b>{doneToday[0].planName}</b>. Agora é descansar, comer bem e dormir 💛
             </p>
           </div>
         </Card>
@@ -219,7 +232,7 @@ export default function HomePage() {
         </Card>
       ) : (
         <Card className="mb-4 flex items-center gap-3 overflow-hidden p-5" style={washStyle("ceu")}>
-          <Cat pose="sleep" size={104} className="shrink-0" />
+          <Sunflower stem size={64} className="animate-sway shrink-0" />
           <div>
             <p className="font-hand text-3xl font-bold leading-none">Hoje é descanso</p>
             <p className="mt-1 text-sm text-ink-2">
