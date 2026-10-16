@@ -16,8 +16,9 @@ Site de academia feito para usar no iPhone, sem precisar baixar app nenhum. Ele 
 | **Treino** | Registra kg × reps por série, preenche com o que fez da última vez, cronometra o descanso (com bipe), troca o exercício se a máquina estiver ocupada e avisa quando dá para subir a carga |
 | **Resumo** | Comemoração, duração, séries, kg levantados, recordes e "como você se sentiu" |
 | **Evolução** | Mapa muscular (descansando/recuperando/pronto), calendário, gráfico por exercício e histórico |
+| **Comida** | Diário de refeições (texto, grupos alimentares e foto opcional), água em copos, "girassol do dia" com metas simples e ideias do que comer em cada momento (inclusive antes e depois do treino) |
 | **Corpo** | Peso, medidas e fotos de progresso (tudo opcional e com linguagem gentil) |
-| **Ajustes** | Perfil, gatinho, agenda da semana, tema claro/escuro, **exportar/importar JSON** |
+| **Ajustes** *(engrenagem na tela Hoje)* | Perfil, gatinho, agenda da semana, tema claro/escuro, **exportar/importar JSON** |
 
 ## A ficha inicial
 
@@ -35,6 +36,20 @@ Por que assim:
 - 2–3 séries de 8–15 repetições, com carga que deixe 2–3 repetições "sobrando". Postura vem antes de peso.
 - **Progressão dupla**: fez todas as séries no máximo de repetições? Na próxima, sobe um pouquinho a carga. O app avisa com um girassol 🌻.
 - Nas primeiras semanas, vale pedir para o professor da academia conferir a execução.
+
+## Alimentação
+
+A área de comida foi pensada para hábito, não para dieta: **não conta calorias** e não tem "comida proibida" (com 17 anos o corpo ainda está crescendo, e contar caloria nessa idade costuma fazer mais mal do que bem). Ela anota o que comeu e marca os grupos (proteína, carboidrato, fruta, verdura/legume, leite/iogurte/queijo, docinho). O app transforma isso em pétalas de um girassol:
+
+- água no objetivo (padrão 8 copos de 250 ml, dá pra mudar)
+- tomou café da manhã
+- proteína em 3 refeições
+- 2 frutas
+- verduras/legumes em 2 refeições
+- 1 porção de leite/iogurte/queijo
+- nos dias de treino: comeu antes e depois do treino
+
+As ideias do que comer são comidas brasileiras simples, separadas por momento (café, lanche, almoço/jantar, pré-treino, pós-treino, ceia). Tocar em uma já registra a refeição. Para um plano alimentar individual, o ideal é uma nutricionista.
 
 ## Rodar no computador
 
@@ -59,7 +74,7 @@ Requer Node 20+.
 
 **Ajustes → Seus dados → Exportar** gera um arquivo `girassol-treinos-AAAA-MM-DD.json` com:
 - `resumo`: visão rápida para quem vai montar a próxima ficha (cargas por exercício, quantas vezes fez, como se sentiu…)
-- `plans`, `sessions`, `exercises`, `bodyLogs`, `profile`: os dados completos
+- `plans`, `sessions`, `exercises`, `bodyLogs`, `meals`, `foodDays`, `profile`: os dados completos
 
 Para **trocar a ficha**: escreva um JSON no formato de [`FORMATO_JSON.md`](./FORMATO_JSON.md) (tem exemplo pronto e um texto para pedir a uma IA). Depois vá em **Ajustes → Importar → "Trocar minhas fichas por essas"**. O histórico de treinos não é apagado.
 
@@ -73,7 +88,7 @@ Para **trocar a ficha**: escreva um JSON no formato de [`FORMATO_JSON.md`](./FOR
 
 ```
 src/
-  app/            páginas (/, /fichas, /fichas/editar, /exercicio, /treino, /treino/resumo, /evolucao, /corpo, /ajustes)
+  app/            páginas (/, /fichas, /fichas/editar, /exercicio, /treino, /treino/resumo, /comida, /evolucao, /corpo, /ajustes)
   components/     UI, ilustrações, mídia, mapa do corpo, seletor de exercícios
   lib/
     catalog.ts    os 54 exercícios (nomes e passo a passo em português)
@@ -81,6 +96,7 @@ src/
     db.ts         banco local (Dexie)
     backup.ts     exportar / importar JSON
     stats.ts      última vez, recordes, recuperação muscular
+    food.ts       grupos alimentares, refeições, sugestões e metas do dia
 public/
   exercicios/     fotos dos exercícios
   sw.js           service worker (abrir offline)

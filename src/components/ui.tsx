@@ -428,6 +428,7 @@ export function Select<T extends string | number>({
   ariaLabel,
   title,
   className,
+  compact = false,
 }: {
   value: T;
   options: SelectOption<T>[];
@@ -436,6 +437,8 @@ export function Select<T extends string | number>({
   ariaLabel?: string;
   title?: ReactNode;
   className?: string;
+  /** versão pequena, em forma de pílula */
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const current = options.find((o) => o.value === value);
@@ -448,10 +451,15 @@ export function Select<T extends string | number>({
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen(true)}
-        className={cx(inputClass, "flex min-w-0 items-center justify-between gap-2 text-left", open && "border-sun ring-2 ring-sun/30", className)}
+        className={cx(
+          compact ? "h-8 rounded-full border border-line bg-paper px-3 text-xs font-bold text-ink outline-none" : inputClass,
+          "flex min-w-0 items-center justify-between gap-2 text-left",
+          open && "border-sun ring-2 ring-sun/30",
+          className,
+        )}
       >
         <span className="min-w-0 truncate">{current?.label ?? "Escolher"}</span>
-        <ChevronDown size={18} className={cx("shrink-0 text-ink-3 transition", open && "rotate-180 text-sun-deep")} />
+        <ChevronDown size={compact ? 14 : 18} className={cx("shrink-0 text-ink-3 transition", open && "rotate-180 text-sun-deep")} />
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title={title ?? ariaLabel}>
         <ul role="listbox" className="space-y-1.5 pb-1">

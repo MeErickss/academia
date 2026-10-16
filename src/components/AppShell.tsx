@@ -1,6 +1,6 @@
 "use client";
 
-import { ChartLine, ClipboardList, Home, PersonStanding, Settings } from "lucide-react";
+import { Apple, ChartLine, ClipboardList, Home, PersonStanding } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
@@ -13,9 +13,9 @@ import { cx } from "./ui";
 const TABS = [
   { href: "/", label: "Hoje", icon: Home },
   { href: "/fichas", label: "Fichas", icon: ClipboardList },
+  { href: "/comida", label: "Comida", icon: Apple },
   { href: "/evolucao", label: "Evolução", icon: ChartLine },
   { href: "/corpo", label: "Corpo", icon: PersonStanding },
-  { href: "/ajustes", label: "Ajustes", icon: Settings },
 ];
 
 function isActive(pathname: string, href: string) {

@@ -1,7 +1,7 @@
 import Dexie, { type EntityTable } from "dexie";
 import { BUILTIN_EXERCISES } from "./catalog";
 import { defaultPlans } from "./seed";
-import type { BodyLog, Exercise, MediaItem, Plan, Profile, Session } from "./types";
+import type { BodyLog, Exercise, FoodDay, MealEntry, MediaItem, Plan, Profile, Session } from "./types";
 
 /**
  * "Banco de dados" do app: IndexedDB do próprio navegador.
@@ -14,6 +14,8 @@ export class GirassolDB extends Dexie {
   sessions!: EntityTable<Session, "id">;
   bodyLogs!: EntityTable<BodyLog, "id">;
   media!: EntityTable<MediaItem, "id">;
+  meals!: EntityTable<MealEntry, "id">;
+  foodDays!: EntityTable<FoodDay, "date">;
 
   constructor() {
     super("girassol");
@@ -24,6 +26,11 @@ export class GirassolDB extends Dexie {
       sessions: "id, status, startedAt, planId",
       bodyLogs: "id, date",
       media: "id, purpose, exerciseId, date",
+    });
+    // v2: alimentação
+    this.version(2).stores({
+      meals: "id, date",
+      foodDays: "date",
     });
     this.on("populate", (tx) => {
       tx.table("exercises").bulkAdd(BUILTIN_EXERCISES);

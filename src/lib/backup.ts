@@ -5,7 +5,9 @@ import type {
   BodyLog,
   Category,
   Exercise,
+  FoodDay,
   Measure,
+  MealEntry,
   MediaItem,
   Muscle,
   Plan,
@@ -18,7 +20,7 @@ import { ALL_MUSCLES } from "./muscles";
 
 export const BACKUP_FORMAT = 1;
 
-type MediaExport = Omit<MediaItem, "data"> & { dataUrl: string };
+export type MediaExport = Omit<MediaItem, "data"> & { dataUrl: string };
 
 export interface BackupFile {
   app: "girassol";
@@ -30,6 +32,8 @@ export interface BackupFile {
   exercises?: Exercise[];
   sessions?: Session[];
   bodyLogs?: BodyLog[];
+  meals?: MealEntry[];
+  foodDays?: FoodDay[];
   media?: MediaExport[];
   schedule?: Profile["schedule"];
   resumo?: unknown;
@@ -88,33 +92,52 @@ function buildSummary(sessions: Session[], exercises: Exercise[], profile: Profi
   };
 }
 
+function foodSummary(meals: MealEntry[], foodDays: FoodDay[]) {
+  const days = new Set([...meals.map((m) => m.date), ...foodDays.filter((d) => d.water > 0).map((d) => d.date)]);
+  if (!days.size) return null;
+  const perGroup: Record<string, number> = {};
+  for (const m of meals) for (const g of m.groups) perGroup[g] = (perGroup[g] ?? 0) + 1;
+  const water = foodDays.filter((d) => d.water > 0);
+  return {
+    diasAnotados: days.size,
+    refeicoesAnotadas: meals.length,
+    mediaCoposDeAguaPorDia: water.length ? Math.round((water.reduce((t, d) => t + d.water, 0) / water.length) * 10) / 10 : null,
+    vezesPorGrupoAlimentar: perGroup,
+  };
+}
+
 export async function buildBackup(includeMedia: boolean): Promise<BackupFile> {
-  const [profile, plans, exercises, sessions, bodyLogs] = await Promise.all([
+  const [profile, plans, exercises, sessions, bodyLogs, meals, foodDays] = await Promise.all([
     db.profile.get("me"),
     db.plans.orderBy("order").toArray(),
     db.exercises.toArray(),
     db.sessions.toArray(),
     db.bodyLogs.orderBy("date").toArray(),
+    db.meals.orderBy("date").toArray(),
+    db.foodDays.orderBy("date").toArray(),
   ]);
   const file: BackupFile = {
     app: "girassol",
     formato: BACKUP_FORMAT,
     tipo: "backup",
     exportadoEm: new Date().toISOString(),
-    resumo: buildSummary(sessions, exercises, profile ?? null),
+    resumo: { ...buildSummary(sessions, exercises, profile ?? null), alimentacao: foodSummary(meals, foodDays) },
     profile: profile ?? null,
     plans,
     exercises,
     sessions: sessions.filter((s) => s.status === "done").sort((a, b) => a.startedAt - b.startedAt),
     bodyLogs,
+    meals,
+    foodDays,
   };
-  if (includeMedia) {
-    const media = await db.media.toArray();
-    file.media = await Promise.all(
-      media.map(async ({ data, ...rest }) => ({ ...rest, dataUrl: await bufferToDataUrl(data, rest.mime) })),
-    );
-  }
+  if (includeMedia) file.media = await exportMedia();
   return file;
+}
+
+/** Fotos e vídeos convertidos para texto (data URL), para irem dentro do JSON. */
+export async function exportMedia(): Promise<MediaExport[]> {
+  const media = await db.media.toArray();
+  return Promise.all(media.map(async ({ data, ...rest }) => ({ ...rest, dataUrl: await bufferToDataUrl(data, rest.mime) })));
 }
 
 export function backupFileName() {
@@ -132,7 +155,7 @@ export async function markBackupDone() {
 export interface ImportPreview {
   file: BackupFile;
   isFullBackup: boolean;
-  counts: { plans: number; sessions: number; bodyLogs: number; media: number; exercises: number };
+  counts: { plans: number; sessions: number; bodyLogs: number; meals: number; media: number; exercises: number };
 }
 
 export function parseBackup(text: string): ImportPreview {
@@ -155,6 +178,7 @@ export function parseBackup(text: string): ImportPreview {
       plans: file.plans?.length ?? 0,
       sessions: file.sessions?.length ?? 0,
       bodyLogs: file.bodyLogs?.length ?? 0,
+      meals: file.meals?.length ?? 0,
       media: file.media?.length ?? 0,
       exercises: file.exercises?.filter((e) => e.custom).length ?? 0,
     },
@@ -282,14 +306,16 @@ export async function importPlans(file: BackupFile, mode: "replace" | "add") {
     }
     await db.plans.bulkPut(plans);
 
-    const schedule = file.schedule ?? file.profile?.schedule;
-    if (schedule && mode === "replace") {
+    if (mode === "replace") {
+      // Usa a agenda do arquivo, se tiver; senão mantém só os dias que ainda apontam pra fichas que existem.
+      const prof = await db.profile.get("me");
+      const schedule = file.schedule ?? file.profile?.schedule ?? prof?.schedule ?? {};
       const valid = new Set(plans.map((p) => p.id));
       const clean: Profile["schedule"] = {};
       for (const [day, entry] of Object.entries(schedule)) {
         if (entry && valid.has(entry.planId)) clean[day] = entry;
       }
-      await db.profile.update("me", { schedule: clean });
+      if (prof) await db.profile.update("me", { schedule: clean });
     }
   });
 }
@@ -302,21 +328,41 @@ export async function restoreBackup(file: BackupFile) {
     media.push({ ...rest, data: await dataUrlToBuffer(dataUrl) });
   }
   const now = Date.now();
-  await db.transaction("rw", [db.profile, db.plans, db.exercises, db.sessions, db.bodyLogs, db.media], async () => {
+  await db.transaction("rw", [db.profile, db.plans, db.exercises, db.sessions, db.bodyLogs, db.meals, db.foodDays, db.media], async () => {
     const keepProfile = await db.profile.get("me");
     await Promise.all([
       db.plans.clear(),
       db.exercises.clear(),
       db.sessions.clear(),
       db.bodyLogs.clear(),
+      db.meals.clear(),
+      db.foodDays.clear(),
       file.media ? db.media.clear() : Promise.resolve(),
     ]);
-    if (file.profile) await db.profile.put({ ...file.profile, id: "me" });
+    if (file.profile) {
+      const p = file.profile;
+      await db.profile.put({
+        ...p,
+        id: "me",
+        name: str(p.name),
+        catName: str(p.catName, "Mimi"),
+        catColor: p.catColor ?? "laranja",
+        schedule: p.schedule && typeof p.schedule === "object" ? p.schedule : {},
+        createdAt: num(p.createdAt, now),
+        seedVersion: num(p.seedVersion, 1),
+      });
+    }
     else if (keepProfile) await db.profile.put(keepProfile);
     await db.exercises.bulkPut((file.exercises ?? []).map(normalizeExercise));
     await db.plans.bulkPut((file.plans ?? []).map((p, i) => normalizePlan(p, i, now)));
     await db.sessions.bulkPut((file.sessions ?? []).filter((s) => s && s.id && Array.isArray(s.exercises)));
     await db.bodyLogs.bulkPut((file.bodyLogs ?? []).filter((b) => b && b.id && b.date));
+    await db.meals.bulkPut(
+      (file.meals ?? [])
+        .filter((m) => m && m.id && m.date && m.slot)
+        .map((m) => ({ ...m, text: m.text ?? "", groups: Array.isArray(m.groups) ? m.groups : [] })),
+    );
+    await db.foodDays.bulkPut((file.foodDays ?? []).filter((d) => d && d.date).map((d) => ({ ...d, water: Number(d.water) || 0 })));
     if (media.length) await db.media.bulkPut(media);
   });
   await syncBuiltinExercises();

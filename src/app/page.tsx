@@ -1,13 +1,15 @@
 "use client";
 
-import { CloudDownload, Play, X } from "lucide-react";
+import { CloudDownload, Play, Settings, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { Cat, Sunflower } from "@/components/art";
+import { Cat, Sunflower, SunflowerGoals } from "@/components/art";
 import { InstallSteps } from "@/components/Onboarding";
 import { estimateMinutes, MuscleChips, planMuscles, PlanPreviewSheet, useStartWorkout } from "@/components/plans";
 import { Card, Chip, cx, PLAN_COLORS, SectionTitle, Spinner, washStyle } from "@/components/ui";
+import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/db";
+import { dayGoals, DEFAULT_WATER_GOAL } from "@/lib/food";
 import { addDays, dayKey, formatDate, greeting, startOfWeek, WEEKDAYS, WEEKDAYS_LETTER } from "@/lib/dates";
 import { useActiveSession, useDoneSessions, useExerciseMap, useIsIOS, useIsStandalone, usePlans, useProfile } from "@/lib/hooks";
 import { sessionsInWeek, weekStreak } from "@/lib/stats";
@@ -22,6 +24,29 @@ const PHRASES = [
   "Beba água, respire fundo e bora!",
   "Constância vale mais que perfeição ✨",
 ];
+
+/** Resuminho da alimentação de hoje, com atalho pra página Comida. */
+function FoodSummary({ profile, trainingToday }: { profile: Profile; trainingToday: boolean }) {
+  const today = dayKey();
+  const meals = useLiveQuery(() => db.meals.where("date").equals(today).toArray(), [today]);
+  const day = useLiveQuery(async () => (await db.foodDays.get(today)) ?? null, [today]);
+  if (!meals || day === undefined) return null;
+  const goal = profile.waterGoal ?? DEFAULT_WATER_GOAL;
+  const goals = dayGoals(meals, day?.water ?? 0, goal, trainingToday);
+  const done = goals.filter((g) => g.done).length;
+  return (
+    <Link href="/comida" className="mb-5 flex items-center gap-3 rounded-3xl border border-line bg-card p-3 shadow-soft active:scale-[0.99]">
+      <SunflowerGoals total={goals.length} done={done} size={58} />
+      <span className="min-w-0 flex-1">
+        <span className="block font-extrabold">Comida de hoje</span>
+        <span className="block text-sm text-ink-2">
+          {meals.length ? `${meals.length} ${meals.length === 1 ? "refeição" : "refeições"}` : "nada anotado ainda"} · 💧 {day?.water ?? 0}/{goal} copos
+        </span>
+      </span>
+      <span className="shrink-0 rounded-full bg-sun-pale px-3 py-1.5 text-sm font-extrabold text-ink">Anotar</span>
+    </Link>
+  );
+}
 
 function shortPlanLabel(plan: Plan) {
   const m = plan.name.match(/treino\s+(\S{1,2})$/i);
@@ -81,7 +106,12 @@ export default function HomePage() {
           </h1>
           <p className="mt-2 max-w-[15rem] text-sm text-ink-2">{phrase}</p>
         </div>
-        <Sunflower stem size={78} className="animate-sway -mr-1 shrink-0" />
+        <div className="flex shrink-0 flex-col items-end">
+          <Link href="/ajustes" aria-label="Ajustes" className="-mr-1 flex h-10 w-10 items-center justify-center rounded-full text-ink-2 active:bg-card-2">
+            <Settings size={22} />
+          </Link>
+          <Sunflower stem size={70} className="animate-sway -mr-1 -mt-1" />
+        </div>
       </header>
 
       {/* Dica: instalar na Tela de Início */}
@@ -226,6 +256,8 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      <FoodSummary profile={profile} trainingToday={!!todayPlan && !todayEntry?.optional} />
 
       {/* Números */}
       <section className="mb-5 grid grid-cols-3 gap-3">

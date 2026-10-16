@@ -407,3 +407,50 @@ export function PetalRain({ count = 26 }: { count?: number }) {
     </div>
   );
 }
+
+/** Girassol de metas: cada pétala é uma meta do dia. */
+export function SunflowerGoals({ total, done, size = 120 }: { total: number; done: number; size?: number }) {
+  const step = 360 / Math.max(total, 1);
+  const petal = "M50 50 C 37 39 38 16 50 4 C 62 16 63 39 50 50 Z";
+  return (
+    <svg viewBox="0 0 100 100" width={size} height={size} role="img" aria-label={`${done} de ${total} metas`}>
+      <circle cx="50" cy="50" r="44" fill="url(#wash-sun)" opacity={0.25 + 0.6 * (done / Math.max(total, 1))} />
+      <g filter="url(#wc)">
+        {Array.from({ length: total }, (_, i) => (
+          <path
+            key={i}
+            d={petal}
+            transform={`rotate(${i * step} 50 50)`}
+            fill={i < done ? "url(#petal-grad)" : "var(--line)"}
+            stroke={i < done ? "#e2960e" : "none"}
+            strokeWidth="0.8"
+          />
+        ))}
+      </g>
+      <circle cx="50" cy="50" r="17" fill="#6b4423" />
+      <circle cx="50" cy="50" r="13" fill="#4f2f17" />
+      <text x="50" y="55" textAnchor="middle" fontSize="15" fontWeight="800" fill="#ffe7a8" fontFamily="var(--font-sans)">
+        {done}/{total}
+      </text>
+    </svg>
+  );
+}
+
+/** Copo de água (cheio ou vazio). */
+export function WaterCup({ filled, size = 32 }: { filled: boolean; size?: number }) {
+  const glass = "M3 3 L21 3 L18.6 26.6 Q18.4 28.4 16.6 28.4 L7.4 28.4 Q5.6 28.4 5.4 26.6 Z";
+  return (
+    <svg viewBox="0 0 24 31" width={size} height={size * 1.29} aria-hidden>
+      {filled && (
+        <path
+          filter="url(#wc)"
+          d="M4.3 10.5 Q8 8.8 12 10.4 Q16 12 19.7 10.5 L18.6 26.6 Q18.4 28.4 16.6 28.4 L7.4 28.4 Q5.6 28.4 5.4 26.6 Z"
+          fill="#7fbde0"
+          opacity="0.9"
+        />
+      )}
+      {filled && <path d="M7 14 L7.6 24" stroke="#fff" strokeWidth="1.3" strokeLinecap="round" opacity="0.7" />}
+      <path d={glass} fill="none" stroke={filled ? "#4f97c2" : "var(--ink-3)"} strokeWidth="1.6" strokeLinejoin="round" opacity={filled ? 1 : 0.6} />
+    </svg>
+  );
+}

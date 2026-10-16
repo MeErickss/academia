@@ -2,7 +2,7 @@
 
 O app lê e gera arquivos `.json`. Existem dois usos:
 
-1. **Backup completo** (Ajustes → Exportar): tem tudo (`profile`, `plans`, `exercises`, `sessions`, `bodyLogs` e, se marcado, `media`) e um `resumo` legível.
+1. **Backup completo** (Ajustes → Exportar): tem tudo (`profile`, `plans`, `exercises`, `sessions`, `bodyLogs`, `meals`, `foodDays` e, se marcado, `media`) e um `resumo` legível (incluindo `resumo.alimentacao`).
 2. **Ficha nova** (feita à mão ou por uma IA): só precisa de `plans` (e, se quiser, `schedule`).
 
 Na importação, o app mostra o que tem no arquivo e pergunta:

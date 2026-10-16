@@ -1,19 +1,22 @@
 "use client";
 
 import { ClipboardCopy, Download, FileUp, Heart, Share2, Trash2, Upload } from "lucide-react";
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { CAT_PALETTES, Cat } from "@/components/art";
 import { InstallSteps } from "@/components/Onboarding";
 import { Button, Card, ConfirmSheet, cx, Field, inputClass, NumberInput, PageHeader, SectionTitle, Segmented, Select, Sheet, Spinner, Toggle } from "@/components/ui";
 import {
   backupFileName,
   buildBackup,
+  exportMedia,
   importPlans,
   markBackupDone,
   parseBackup,
   restoreBackup,
   wipeEverything,
   type ImportPreview,
+  type MediaExport,
 } from "@/lib/backup";
 import { db } from "@/lib/db";
 import { relativeDay, WEEKDAYS } from "@/lib/dates";
@@ -122,7 +125,6 @@ function ScheduleCard({ profile, plans }: { profile: Profile; plans: Plan[] }) {
               <Select
                 ariaLabel={`Ficha de ${WEEKDAYS[d]}`}
                 title={WEEKDAYS[d]}
-                className="h-11"
                 value={entry?.planId ?? ""}
                 onChange={(v) => setDay(d, v)}
                 options={[
@@ -159,60 +161,67 @@ function BackupCard({ profile }: { profile: Profile }) {
     () => false,
   );
 
-  async function makeFile() {
-    const data = await buildBackup(includeMedia);
+  // O Safari do iPhone só deixa compartilhar/copiar se for logo no toque,
+  // então o backup fica pronto antes (e se atualiza sozinho quando os dados mudam).
+  const base = useLiveQuery(() => buildBackup(false), []);
+  const [media, setMedia] = useState<MediaExport[] | null>(null);
+  useEffect(() => {
+    if (!includeMedia) return;
+    let cancelled = false;
+    exportMedia().then((m) => !cancelled && setMedia(m));
+    return () => {
+      cancelled = true;
+    };
+  }, [includeMedia]);
+  const ready = !!base && (!includeMedia || !!media);
+
+  function makeFile(withMedia: boolean) {
+    const data = withMedia && media ? { ...base!, media } : base!;
     const text = JSON.stringify(data, null, 2);
     return { text, file: new File([text], backupFileName(), { type: "application/json" }) };
   }
 
-  async function share() {
-    setBusy(true);
+  function share() {
     setMsg(null);
-    try {
-      const { file } = await makeFile();
-      await navigator.share({ files: [file], title: "Backup do Girassol" });
-      await markBackupDone();
-      setMsg("Pronto! 🌻");
-    } catch (e) {
-      if ((e as Error)?.name !== "AbortError") setMsg("Não deu pra compartilhar. Tente “Baixar arquivo”.");
-    } finally {
-      setBusy(false);
-    }
+    const { file } = makeFile(includeMedia);
+    setBusy(true);
+    navigator
+      .share({ files: [file], title: "Backup do Girassol" })
+      .then(async () => {
+        await markBackupDone();
+        setMsg("Pronto! 🌻");
+      })
+      .catch((e) => {
+        if ((e as Error)?.name !== "AbortError") setMsg("Não deu pra compartilhar. Tente “Baixar arquivo”.");
+      })
+      .finally(() => setBusy(false));
   }
 
-  async function download() {
-    setBusy(true);
+  function download() {
     setMsg(null);
-    try {
-      const { file } = await makeFile();
-      const url = URL.createObjectURL(file);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = file.name;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
-      await markBackupDone();
-      setMsg("Arquivo salvo (no iPhone fica em Arquivos › Downloads).");
-    } finally {
-      setBusy(false);
-    }
+    const { file } = makeFile(includeMedia);
+    const url = URL.createObjectURL(file);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    markBackupDone();
+    setMsg("Arquivo salvo (no iPhone fica em Arquivos › Downloads).");
   }
 
-  async function copy() {
-    setBusy(true);
+  function copy() {
     setMsg(null);
-    try {
-      const text = JSON.stringify(await buildBackup(false), null, 2);
-      await navigator.clipboard.writeText(text);
-      await markBackupDone();
-      setMsg("Copiado! Agora é só colar onde quiser.");
-    } catch {
-      setMsg("Não deu pra copiar neste aparelho.");
-    } finally {
-      setBusy(false);
-    }
+    const { text } = makeFile(false);
+    navigator.clipboard
+      .writeText(text)
+      .then(async () => {
+        await markBackupDone();
+        setMsg("Copiado! Agora é só colar onde quiser.");
+      })
+      .catch(() => setMsg("Não deu pra copiar neste aparelho."));
   }
 
   return (
@@ -230,14 +239,14 @@ function BackupCard({ profile }: { profile: Profile }) {
       </div>
       <div className="mt-3 grid gap-2">
         {canShareFiles && (
-          <Button variant="sun" disabled={busy} onClick={share}>
+          <Button variant="sun" disabled={busy || !ready} onClick={share}>
             <Share2 size={18} /> Compartilhar / salvar em Arquivos
           </Button>
         )}
-        <Button variant={canShareFiles ? "soft" : "sun"} disabled={busy} onClick={download}>
+        <Button variant={canShareFiles ? "soft" : "sun"} disabled={busy || !ready} onClick={download}>
           <Download size={18} /> Baixar arquivo
         </Button>
-        <Button variant="ghost" disabled={busy} onClick={copy}>
+        <Button variant="ghost" disabled={busy || !base} onClick={copy}>
           <ClipboardCopy size={18} /> Copiar como texto (sem fotos)
         </Button>
       </div>
@@ -324,6 +333,7 @@ function ImportCard() {
               <li>🌻 {plural(c.plans, "ficha", "fichas")}</li>
               {c.sessions > 0 && <li>🏋️ {plural(c.sessions, "treino feito", "treinos feitos")}</li>}
               {c.bodyLogs > 0 && <li>📏 {plural(c.bodyLogs, "registro de corpo", "registros de corpo")}</li>}
+              {c.meals > 0 && <li>🍽️ {plural(c.meals, "refeição anotada", "refeições anotadas")}</li>}
               {c.media > 0 && <li>📸 {plural(c.media, "foto/vídeo", "fotos/vídeos")}</li>}
               {c.exercises > 0 && <li>✨ {plural(c.exercises, "exercício criado", "exercícios criados")}</li>}
             </ul>
@@ -352,7 +362,7 @@ function ImportCard() {
         open={confirm === "restore"}
         onClose={() => setConfirm(null)}
         title="Restaurar backup?"
-        message="Tudo que está no app agora (fichas, treinos, medidas) vai ser substituído pelo que está no arquivo."
+        message="Tudo que está no app agora (fichas, treinos, medidas, alimentação) vai ser substituído pelo que está no arquivo."
         confirmLabel="Restaurar"
         danger
         onConfirm={() => run("restore")}

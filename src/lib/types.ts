@@ -120,7 +120,7 @@ export interface BodyLog {
 
 export interface MediaItem {
   id: string;
-  purpose: "exercise" | "progress";
+  purpose: "exercise" | "progress" | "meal";
   exerciseId?: string;
   /** AAAA-MM-DD — usado nas fotos de progresso */
   date?: string;
@@ -152,4 +152,32 @@ export interface Profile {
   seedVersion: number;
   installTipDismissed?: boolean;
   lastBackupAt?: number;
+  /** meta de copos de água (250 ml) por dia */
+  waterGoal?: number;
+}
+
+// ——— Alimentação ———
+
+export type FoodGroup = "proteina" | "carbo" | "fruta" | "verdura" | "leite" | "doce";
+
+export type MealSlot = "cafe" | "lanche_manha" | "almoco" | "pre" | "lanche_tarde" | "pos" | "jantar" | "ceia";
+
+export interface MealEntry {
+  id: string;
+  /** AAAA-MM-DD */
+  date: string;
+  slot: MealSlot;
+  text: string;
+  groups: FoodGroup[];
+  /** HH:MM */
+  time?: string;
+  mediaId?: string;
+  createdAt: number;
+}
+
+export interface FoodDay {
+  /** AAAA-MM-DD */
+  date: string;
+  water: number;
+  note?: string;
 }

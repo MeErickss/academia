@@ -4,8 +4,8 @@
  * - Arquivos com hash do Next, fotos dos exercícios e ícones: cache primeiro.
  * Os dados dela não passam por aqui — ficam no IndexedDB.
  */
-const VERSION = "girassol-v1";
-const PAGES = ["/", "/fichas", "/evolucao", "/corpo", "/ajustes", "/treino", "/treino/resumo", "/exercicio", "/fichas/editar"];
+const VERSION = "girassol-v2";
+const PAGES = ["/", "/fichas", "/evolucao", "/corpo", "/ajustes", "/treino", "/treino/resumo", "/exercicio", "/fichas/editar", "/comida"];
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
