@@ -408,22 +408,25 @@ export function PetalRain({ count = 26 }: { count?: number }) {
   );
 }
 
-/** Girassol de metas: cada pétala é uma meta do dia. */
-export function SunflowerGoals({ total, done, size = 120 }: { total: number; done: number; size?: number }) {
-  const step = 360 / Math.max(total, 1);
-  const petal = "M50 50 C 37 39 38 16 50 4 C 62 16 63 39 50 50 Z";
+/** Girassol de metas: 10 pétalas que vão acendendo conforme as metas do dia. */
+export function SunflowerGoals({ total, done, size = 120, petals = 10 }: { total: number; done: number; size?: number; petals?: number }) {
+  const step = 360 / petals;
+  const ratio = total ? Math.min(1, done / total) : 0;
+  const lit = Math.round(ratio * petals);
+  const petal = "M50 50 C 41 39 41.5 15 50 4 C 58.5 15 59 39 50 50 Z";
   return (
     <svg viewBox="0 0 100 100" width={size} height={size} role="img" aria-label={`${done} de ${total} metas`}>
-      <circle cx="50" cy="50" r="44" fill="url(#wash-sun)" opacity={0.25 + 0.6 * (done / Math.max(total, 1))} />
+      <circle cx="50" cy="50" r="44" fill="url(#wash-sun)" opacity={0.2 + 0.65 * ratio} />
       <g filter="url(#wc)">
-        {Array.from({ length: total }, (_, i) => (
+        {Array.from({ length: petals }, (_, i) => (
           <path
             key={i}
             d={petal}
             transform={`rotate(${i * step} 50 50)`}
-            fill={i < done ? "url(#petal-grad)" : "var(--line)"}
-            stroke={i < done ? "#e2960e" : "none"}
+            fill={i < lit ? "url(#petal-grad)" : "var(--line)"}
+            stroke={i < lit ? "#e2960e" : "none"}
             strokeWidth="0.8"
+            style={{ transition: "fill 0.4s ease" }}
           />
         ))}
       </g>
