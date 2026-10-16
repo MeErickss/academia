@@ -1,0 +1,299 @@
+@import "tailwindcss";
+@import "@fontsource-variable/nunito";
+@import "@fontsource/caveat/600.css";
+@import "@fontsource/caveat/700.css";
+
+/* ——— Paleta: papel de aquarela, girassol, folha, pêssego, céu ——— */
+:root {
+  --paper: #fffaf0;
+  --paper-2: #fff3da;
+  --card: #fffdf8;
+  --card-2: #fff6e3;
+  --line: #efe0bd;
+  --ink: #3b2f22;
+  --ink-2: #6c5c47;
+  --ink-3: #9d8b72;
+  --sun: #f5b82e;
+  --sun-deep: #c98a06;
+  --sun-soft: #fde4a0;
+  --sun-pale: #fff2c9;
+  --leaf: #5f8c3e;
+  --leaf-soft: #dcecc9;
+  --peach: #ea8a5f;
+  --peach-soft: #fde0cf;
+  --sky: #5d9cc0;
+  --sky-soft: #d8ebf5;
+  --lilac: #9479c4;
+  --lilac-soft: #ebe2f7;
+  --seed: #6b4423;
+  --danger: #c84f36;
+  --on-sun: #3b2f22;
+  --wash-opacity: 0.55;
+  --body-muscle: #ecdfc6;
+  --body-skin: #d8c6a6;
+  --shadow: 0 1px 2px rgb(120 90 30 / 0.06), 0 10px 28px -14px rgb(120 90 30 / 0.28);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #1c1712;
+    --paper-2: #231d16;
+    --card: #29221a;
+    --card-2: #30281d;
+    --line: #42372a;
+    --ink: #f8eedb;
+    --ink-2: #d6c6aa;
+    --ink-3: #a08f76;
+    --sun-deep: #f7c552;
+    --sun-soft: #5b4614;
+    --sun-pale: #392d15;
+    --leaf: #a3c784;
+    --leaf-soft: #2e3a24;
+    --peach: #f2a07a;
+    --peach-soft: #4a2d21;
+    --sky: #8cc0de;
+    --sky-soft: #1f3542;
+    --lilac: #b9a3e3;
+    --lilac-soft: #332a4a;
+    --seed: #5a381c;
+    --danger: #ef7b60;
+    --wash-opacity: 0.22;
+    --body-muscle: #4a3e2f;
+    --body-skin: #5c4d3a;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 28px -14px rgb(0 0 0 / 0.6);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper: #1c1712;
+  --paper-2: #231d16;
+  --card: #29221a;
+  --card-2: #30281d;
+  --line: #42372a;
+  --ink: #f8eedb;
+  --ink-2: #d6c6aa;
+  --ink-3: #a08f76;
+  --sun-deep: #f7c552;
+  --sun-soft: #5b4614;
+  --sun-pale: #392d15;
+  --leaf: #a3c784;
+  --leaf-soft: #2e3a24;
+  --peach: #f2a07a;
+  --peach-soft: #4a2d21;
+  --sky: #8cc0de;
+  --sky-soft: #1f3542;
+  --lilac: #b9a3e3;
+  --lilac-soft: #332a4a;
+  --seed: #5a381c;
+  --danger: #ef7b60;
+  --wash-opacity: 0.22;
+  --body-muscle: #4a3e2f;
+  --body-skin: #5c4d3a;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 28px -14px rgb(0 0 0 / 0.6);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-card: var(--card);
+  --color-card-2: var(--card-2);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-sun: var(--sun);
+  --color-sun-deep: var(--sun-deep);
+  --color-sun-soft: var(--sun-soft);
+  --color-sun-pale: var(--sun-pale);
+  --color-leaf: var(--leaf);
+  --color-leaf-soft: var(--leaf-soft);
+  --color-peach: var(--peach);
+  --color-peach-soft: var(--peach-soft);
+  --color-sky: var(--sky);
+  --color-sky-soft: var(--sky-soft);
+  --color-lilac: var(--lilac);
+  --color-lilac-soft: var(--lilac-soft);
+  --color-seed: var(--seed);
+  --color-danger: var(--danger);
+  --color-on-sun: var(--on-sun);
+  --font-sans: "Nunito Variable", ui-rounded, system-ui, sans-serif;
+  --font-hand: "Caveat", "Bradley Hand", cursive;
+  --shadow-soft: var(--shadow);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--paper);
+  /* textura de papel de aquarela, bem sutil */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .33 0 0 0 0 .18 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  color: var(--ink);
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+  overscroll-behavior-y: none;
+}
+
+/* iPhone: inputs com menos de 16px dão zoom ao focar */
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.font-hand {
+  font-family: var(--font-hand);
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.pb-safe {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* ——— Animações ——— */
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes petal-fall {
+  0% {
+    transform: translate3d(0, -10vh, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--drift, 30px), 105vh, 0) rotate(var(--spin, 540deg));
+    opacity: 0.9;
+  }
+}
+@keyframes frame-a {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  55%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes tail {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(8deg);
+  }
+}
+@keyframes zzz {
+  0% {
+    transform: translateY(4px);
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+}
+
+.animate-sheet-up {
+  animation: sheet-up 0.28s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+.animate-pop {
+  animation: pop 0.35s ease-out;
+}
+.animate-sway {
+  animation: sway 4s ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+.animate-spin-slow {
+  animation: spin-slow 24s linear infinite;
+}
+.frame-a {
+  animation: frame-a 2.4s ease-in-out infinite;
+}
+.cat-tail {
+  animation: tail 2.2s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: 0% 100%;
+}
+.zzz {
+  animation: zzz 2.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-sway,
+  .animate-spin-slow,
+  .cat-tail,
+  .zzz,
+  .frame-a {
+    animation: none;
+  }
+}

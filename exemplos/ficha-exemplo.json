@@ -1,0 +1,59 @@
+{
+  "app": "girassol",
+  "formato": 1,
+  "tipo": "fichas",
+  "plans": [
+    {
+      "id": "treino-a2",
+      "name": "Treino A",
+      "subtitle": "Pernas & glúteos",
+      "color": "sol",
+      "note": "Aquecer 5 min na bicicleta.",
+      "items": [
+        {
+          "exerciseId": "goblet-squat",
+          "sets": 3,
+          "repsMin": 8,
+          "repsMax": 10,
+          "restSec": 90,
+          "loadKg": 10
+        },
+        {
+          "exerciseId": "barbell-hip-thrust",
+          "sets": 4,
+          "repsMin": 10,
+          "repsMax": 12,
+          "restSec": 90
+        },
+        {
+          "exerciseId": "split-squat-with-dumbbells",
+          "sets": 3,
+          "repsMin": 8,
+          "repsMax": 10,
+          "restSec": 75,
+          "perSide": true
+        },
+        {
+          "exerciseId": "plank",
+          "sets": 3,
+          "repsMin": 30,
+          "repsMax": 40,
+          "restSec": 45
+        },
+        {
+          "exerciseName": "Glúteo na máquina (coice)",
+          "sets": 3,
+          "repsMin": 12,
+          "repsMax": 15,
+          "restSec": 60,
+          "perSide": true
+        }
+      ]
+    }
+  ],
+  "schedule": {
+    "2": {
+      "planId": "treino-a2"
+    }
+  }
+}
